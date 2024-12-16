@@ -7,9 +7,8 @@ import time
 import logging
 import threading
 from os.path import join as pathjoin
-from discum.utils.slash import SlashCommander
-from discum.utils.button import Buttoner
 from collections import OrderedDict
+from discum.utils.button import Buttoner
 
 class CacheDict(OrderedDict):
     def __init__(self, *args, **kwds):
@@ -38,8 +37,6 @@ mudae = 432610292342587392
 with open("cmds.txt","r") as f:
     mudae_cmds = [line.rstrip() for line in f]
 mhids = [int(mh) for mh in settings["channel_ids"]]
-shids = [int(sh) for sh in settings["slash_ids"]]
-ghids = [int(gh) for gh in settings["slash_guild_ids"]]
 channel_settings = dict()
 
 series_list = settings["series_list"]
@@ -75,7 +72,7 @@ waifu_wall = {}
 
 #logging settings
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 formatter = logging.Formatter('%(asctime)s:%(message)s')
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
@@ -176,7 +173,7 @@ def get_server_settings(guild_id,channel_id):
     
     # no setting found
     # so send settings request, and hope they have default prefix.
-    FsMsgs = bot.searchMessages(guild_id,channelID=[channel_id],authorID=[bot.gateway.session.user['id']],textSearch=roll_prefix,includeNsfw=True,limit=2)
+    FsMsgs = bot.searchMessages(guild_id,channelID=[channel_id],authorID=[bot.gateway.session.user['id']],textSearch=roll_prefix,limit=2)
     FsResults = bot.filterSearchResults(FsMsgs)
     for group in FsResults:
         if group['content'].endswith(roll_prefix):
@@ -191,7 +188,7 @@ def get_server_settings(guild_id,channel_id):
                 · Claim reset: every **180** min. ($setclaim)
                 · Exact minute of the reset: xx:**56** ($setinterval)
                 · Reset shifted: by +**0** min. ($shifthour)
-                · Rolls per hour: **10** ($setrolls)
+                · Rolls per hour: **13** ($setrolls)
                 · Time before the claim reaction expires: **30** sec. ($settimer)
                 · Spawn rarity multiplicator for already claimed characters: **2** ($setrare)
                 · Server game mode: **1** ($gamemode)
@@ -318,30 +315,10 @@ def poke_roll(tide):
         print(f"{pwait} : pokerolling : {tide}")
         time.sleep(pwait) 
         pwait = 0
-        
-def daily_roll(tide):
-    logger.debug(f"Daily Rolling Started in channel {tide}. (If you would like this in a different channel, please configure the desired channel ID as the first in your list)")
-    tides = str(tide)
-    if tide not in channel_settings:
-        logger.error(f"Could not find channel {tide}, will not roll Daily")
-        return
-    c_settings = channel_settings[tide]
-    dwait = 0
-    while True:
-        while dwait == 0:
-            time.sleep(2)
-            bot.sendMessage(tides,c_settings['prefix']+"daily")
-            dwait = 20*60*60 # sleep for 2 hours
-        print(f"{dwait} : daily_rolling : {tide}")
-        time.sleep(dwait) 
-        dwait = 0
-        
-def waifu_roll(tide,slashed,slashguild):
+
+def waifu_roll(tide):
     global user
-    if slashed == None:
-        logger.debug(f"waifu rolling Started in channel {tide}")
-    else:
-        logger.debug(f"Slashed rolling Started in channel {tide}")
+    logger.debug(f"waifu rolling Started in channel {tide}")
     
     tides = str(tide)
     waifuwait = 0
@@ -363,10 +340,7 @@ def waifu_roll(tide,slashed,slashguild):
         c_settings['rolls'] = 0
         rolls_left = -1
         while waifuwait == False:
-            if slashed != None:
-                bot.triggerSlashCommand(str(mudae), channelID=tides, guildID=slashguild, data=slashed)
-            else:
-                bot.sendMessage(tides,roll_cmd)
+            bot.sendMessage(tides,roll_cmd)
             rolls_left = rolls_left-1
             
             varwait = wait_for(bot,mudae_warning(tides,False),timeout=5)
@@ -414,27 +388,6 @@ def snipe(recv_time,snipe_delay):
             # sleep was negative, so we're overdue!
             return
     time.sleep(.5)
-    
-def snipe_intent(messagechunk,mreacter,buttonspres):
-    if "reactions" in mreacter:
-        if mreacter["reactions"][0]["emoji"]['id'] == None:
-            bot.addReaction(messagechunk["channel_id"], messagechunk["id"], mreacter["reactions"][0]["emoji"]["name"])
-        elif mreacter["reactions"][0]["emoji"]['id'] != None and "kakera" not in mreacter["reactions"][0]["emoji"]["name"]:
-            cust_emoji_send = mreacter["reactions"][0]["emoji"]["name"] + ":" + mreacter["reactions"][0]["emoji"]['id']
-            bot.addReaction(messagechunk['channel_id'], messagechunk['id'], cust_emoji_send)
-    elif buttonspres.components != [] :
-        buttMojis = buttonspres.components[0]["components"][0]["emoji"]["name"]
-        if "kakera" not in buttMojis:
-            bot.click(
-                messagechunk['author']['id'],
-                channelID=messagechunk["channel_id"],
-                guildID=messagechunk.get("guild_id"),
-                messageID=messagechunk["id"],
-                messageFlags=messagechunk["flags"],
-                data=buttonspres.getButton(emojiName=buttMojis),
-                )  
-    else:
-        bot.addReaction(messagechunk['channel_id'], messagechunk['id'], "❤")
 
 def is_rolled_char(m):
     embeds = m.get('embeds',[])
@@ -458,26 +411,9 @@ def on_message(resp):
         embeds = m['embeds']
         messageid = m['id']
         channelid = m['channel_id']
-        
         guildid = m['guild_id'] if 'guild_id' in m else None
         butts = Buttoner(m["components"])
-        
-        #print(dir(butts))
-        
-        # if "@" in content:
-            # print("There was a possible wish detected")
-        
-        # if butts.components != [] :
-            # buttMoji = butts.components[0]["components"][0]["emoji"]["name"]
-            # bot.click(
-            # aId,
-            # channelID=m["channel_id"],
-            # guildID=m.get("guild_id"),
-            # messageID=m["id"],
-            # messageFlags=m["flags"],
-            # data=butts.getButton(emojiName=buttMoji),
-            # )
-            
+
         if int(channelid) not in mhids:
             # Not a channel we work in.
             return
@@ -532,69 +468,69 @@ def on_message(resp):
                 if str(user['id']) in content:
                     logger.info(f"Wished {charname} from {get_serial(chardes)} with {get_kak(chardes)} Value in Server id:{guildid}")
                     snipe(recv,snipe_delay)
+                    print("primeiro if")
                     if msg_buf[messageid]['claimed']:
                         return
                     m_reacts = bot.getMessage(channelid, messageid).json()[0]
-                    snipe_intent(m,m_reacts,butts)
-                    # if "reactions" in m_reacts:
-                        # if m_reacts["reactions"][0]["emoji"]['id'] == None:
-                            # bot.addReaction(channelid, messageid, m_reacts["reactions"][0]["emoji"]["name"])
-                        # elif m_reacts["reactions"][0]["emoji"]['id'] != None and "kakera" not in m_reacts["reactions"][0]["emoji"]["name"]:
-                            # cust_emoji_sen = m_reacts["reactions"][0]["emoji"]["name"] + ":" + m_reacts["reactions"][0]["emoji"]['id']
-                            # bot.addReaction(channelid, messageid, cust_emoji_sen)
-                    # elif butts.components != [] :
-                        # buttMoji = butts.components[0]["components"][0]["emoji"]["name"]
-                        # if "kakera" not in buttMoji:
-                            # bot.click(
-                                        # aId,
-                                        # channelID=m["channel_id"],
-                                        # guildID=m.get("guild_id"),
-                                        # messageID=m["id"],
-                                        # messageFlags=m["flags"],
-                                        # data=butts.getButton(emojiName=buttMoji),
-                                        # )  
-                    # else:
-                        # bot.addReaction(channelid, messageid, "❤")
+                    if "components" in m_reacts:
+                        if m_reacts["components"][0]["components"][0]["emoji"] != None:
+                            # bot.click(m_reacts["author"]["id"], channelid, messageid, m_reacts["components"][0]["components"][0]["emoji"]["name"])
+                            bot.click(
+                                applicationID=aId,
+                                channelID=channelid,
+                                guildID=guildid, 
+                                messageID=messageid,
+                                messageFlags=m["flags"],
+                                data=butts.getButton(emojiName=m_reacts["components"][0]["components"][0]["emoji"]["name"]),
+                            )
+                    else:
+                        bot.addReaction(channelid, messageid, "❤")
                 
                 if charname.lower() in chars:
                     
                     logger.info(f"{charname} appeared attempting to Snipe Server id:{guildid}")
                     snipe(recv,snipe_delay)
+                    print("segundo if")
                     if msg_buf[messageid]['claimed']:
                         return
                     m_reacts = bot.getMessage(channelid, messageid).json()[0]
-                    snipe_intent(m,m_reacts,butts)
+
+                    if "components" in m_reacts:
+                        if m_reacts["components"][0]["components"][0]["emoji"] != None:
+                            # bot.click(m_reacts["author"]["id"], channelid, messageid, m_reacts["components"][0]["components"][0]["emoji"]["name"])
+                            bot.click(
+                                applicationID=aId,
+                                channelID=channelid,
+                                guildID=guildid, 
+                                messageID=messageid,
+                                messageFlags=m["flags"],
+                                data=butts.getButton(emojiName=m_reacts["components"][0]["components"][0]["emoji"]["name"]),
+                            )
+                    else:
+                        bot.addReaction(channelid, messageid, "❤")
                 
                 for ser in series_list:
                     if ser in chardes and charcolor == 16751916:
-                        
-                        
+                         
                         logger.info(f"{charname} from {ser} appeared attempting to snipe in {guildid}")
                         snipe(recv,snipe_delay)
+                        print("terceiro if")
                         if msg_buf[messageid]['claimed']:
                             return
                         m_reacts = bot.getMessage(channelid, messageid).json()[0]
-                        if "reactions" in m_reacts:
-                            if m_reacts["reactions"][0]["emoji"]['id'] == None:
-                                bot.addReaction(channelid, messageid, m_reacts["reactions"][0]["emoji"]["name"])
+                  
+                        if "components" in m_reacts:
+                            if m_reacts["components"][0]["components"][0]["emoji"] != None:
+                                # bot.click(m_reacts["author"]["id"], channelid, messageid, m_reacts["components"][0]["components"][0]["emoji"]["name"])
+                                bot.click(
+                                    applicationID=aId,
+                                    channelID=channelid,
+                                    guildID=guildid, 
+                                    messageID=messageid,
+                                    messageFlags=m["flags"],
+                                    data=butts.getButton(emojiName=m_reacts["components"][0]["components"][0]["emoji"]["name"]),
+                                )
                                 break
-                            elif m_reacts["reactions"][0]["emoji"]['id'] != None and "kakera" not in m_reacts["reactions"][0]["emoji"]["name"]:
-                                cust_emoji_sen = m_reacts["reactions"][0]["emoji"]["name"] + ":" + m_reacts["reactions"][0]["emoji"]['id']
-                                bot.addReaction(channelid, messageid, cust_emoji_sen)
-                                break
-                        elif butts.components != [] :
-                            buttMoji = butts.components[0]["components"][0]["emoji"]["name"]
-                            if "kakera" not in buttMoji:
-                                    bot.click(
-                                        aId,
-                                        channelID=m["channel_id"],
-                                        guildID=m.get("guild_id"),
-                                        messageID=m["id"],
-                                        messageFlags=m["flags"],
-                                        data=butts.getButton(emojiName=buttMoji),
-                                        ) 
-                            break
-        
                         else:
                             bot.addReaction(channelid, messageid, "❤")
                             break
@@ -603,15 +539,28 @@ def on_message(resp):
                     #det_time = time.time()
                     kak_value = get_kak(chardes)
                     if int(kak_value) >= kak_min and charcolor == 16751916:
-                        
-                        
+                 
                         logger.info(f"{charname} with a {kak_value} Kakera Value appeared Server:{guildid}")
                         snipe(recv,snipe_delay)
+                        print("quarto if")
                         if msg_buf[messageid]['claimed']:
                             return
                         m_reacts = bot.getMessage(channelid, messageid).json()[0]
-                        snipe_intent(m,m_reacts,butts)
-                        #print(f"took this much {time.time() - det_time}")
+                  
+                        if "components" in m_reacts:
+                            if m_reacts["components"][0]["components"][0]["emoji"] != None:
+                                # bot.click(m_reacts["author"]["id"], channelid, messageid, m_reacts["components"][0]["components"][0]["emoji"]["name"])
+                                bot.click(
+                                    applicationID=aId,
+                                    channelID=channelid,
+                                    guildID=guildid, 
+                                    messageID=messageid,
+                                    messageFlags=m["flags"],
+                                    data=butts.getButton(emojiName=m_reacts["components"][0]["components"][0]["emoji"]["name"]),
+                                )
+                        else:
+                            bot.addReaction(channelid, messageid, "❤")
+                            #print(f"took this much {time.time() - det_time}")
                 
                 if is_last_enable and next_claim(channelid)[1] - time.time() < (60 * last_claim_window):
                     if "<:kakera:469835869059153940>" in chardes or "Claims:" in chardes or "Likes:" in chardes:
@@ -623,35 +572,36 @@ def on_message(resp):
                             
                             logger.info(f"{charname} with a {kak_value} Kakera Value appeared Server:{guildid}")
                             snipe(recv,snipe_delay)
+                            print("quinto if")
                             if msg_buf[messageid]['claimed']:
                                 return
                             m_reacts = bot.getMessage(channelid, messageid).json()[0]
-                            snipe_intent(m,m_reacts,butts)
-                            #print(f"took this much {time.time() - det_time}")
+                  
+                            if "components" in m_reacts:
+                                if m_reacts["components"][0]["components"][0]["emoji"] != None:
+                                    # bot.click(m_reacts["author"]["id"], channelid, messageid, m_reacts["components"][0]["components"][0]["emoji"]["name"])
+                                    bot.click(
+                                        applicationID=aId,
+                                        channelID=channelid,
+                                        guildID=guildid, 
+                                        messageID=messageid,
+                                        messageFlags=m["flags"],
+                                        data=butts.getButton(emojiName=m_reacts["components"][0]["components"][0]["emoji"]["name"]),
+                                    )
+                            else:
+                                bot.addReaction(channelid, messageid, "❤")
+                                #print(f"took this much {time.time() - det_time}")
                 
                 
                 if str(user['id']) not in content and charname.lower() not in chars and get_serial(chardes) not in series_list and int(get_kak(chardes)) < kak_min:
                     logger.debug(f"Ignoring {charname} from {get_serial(chardes)} with {get_kak(chardes)} Kakera Value in Server id:{guildid}")
-            if butts.components != []:
-                buttsonly = butts.components[0]["components"][0]["emoji"]["name"]
-                #print(buttsonly.lower())
-                if buttsonly in KakeraVari:
-                    bot.click(
-                    aId,
-                    channelID=channelid,
-                    guildID=m.get("guild_id"),
-                    messageID=messageid,
-                    messageFlags=m["flags"],
-                    data=butts.getButton(emojiName=buttonly),
-                    )  
-                
+                    
     if resp.event.message_updated:
         # Handle claims
         r = resp.parsed.auto()
         rchannelid = r["channel_id"]
         rmessageid = r["id"]
-        #embeds = r['embeds']
-        embeds = r.get('embeds',[])
+        embeds = r['embeds']
 
         if int(rchannelid) not in mhids:
             return
@@ -761,49 +711,13 @@ def on_message(resp):
                     time.sleep(snipe_delay)
                     bot.addReaction(rchannelid,rmessageid,emoji)
 
-                    
-    if resp.event.guild_application_commands_updated:
-        slashCmds = resp.parsed.auto()['application_commands']
-        s = SlashCommander(slashCmds, application_id=str(mudae))
-        for sli in range(len(s.commands.get("options"))):
-            if s.commands.get("options")[sli].get("name") == roll_prefix:
-                slashget = s.commands.get("options")[sli]
-        #slashget = s.get(["wa"])
-        #print(slashget)
-        
-        if settings['slash_rolling'].lower().strip() == "true":
-            for xchg in range(len(shids)):
-                slashchannel = shids[xchg]
-                slashguild = ghids[xchg]
-                slashfus = threading.Timer(10.0,waifu_roll,args=[slashchannel,slashget,slashguild])
-                slashfus.start()
-            
     global ready
  
     if resp.event.ready_supplemental and not ready:
         ready = bot.gateway.READY
-        try:
-            user = bot.gateway.session.user
-        except KeyError:
-            try:
-                with open(pathjoin('user','user.txt'),'r') as userssettings:
-                    print(f"Reading from UserFile")
-                    user = userssettings.read()
-            except IOError:
-                print(f"File Not Found using Different Method")
-        bot.gateway.request.searchSlashCommands(str(ghids[0]), limit=100, command_ids=[])
-        
-        try:
-            guilds = bot.gateway.session.settings_ready['guilds']
-        except KeyError:
-            print("It seems like you were unable to get all the guilds you are in please obtain your users settings")
-            try:
-                with open(pathjoin('user','guild.txt'),'r') as guildersettings:
-                    print("reading from Guild file")
-                    guilds = guildersettings.read()
-            except IOError:
-                print("Please get a dump of all your guilds and put it in the userfolder")
-                
+        user = bot.gateway.session.user
+
+        guilds = bot.gateway.session.settings_ready['guilds']
         chs = set(str(mhid) for mhid in mhids)
         for gid, guild in guilds.items():
             for matched_channel in (set(guild['channels'].keys()) & chs):
@@ -815,12 +729,9 @@ def on_message(resp):
         if settings['pkmrolling'].lower().strip() == "true":
             p = threading.Thread(target=poke_roll,args=[mhids[0]])
             p.start()
-            time.sleep(3)
-            d = threading.Thread(target=daily_roll,args=[mhids[0]])
-            d.start()
         if settings['rolling'].lower().strip() == "true":
             for chid in mhids:
-                waifus = threading.Timer(10.0,waifu_roll,args=[chid,None,None])
+                waifus = threading.Timer(10.0,waifu_roll,args=[chid])
                 waifus.start()
 
 def empty(*args,**kwargs):

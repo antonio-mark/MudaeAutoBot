@@ -1,47 +1,57 @@
 {
-   "token":"1",
-   "channel_ids":[
-	  111111111111111
-   ],
-   "slash_ids":[
-	  11111111111111
-   ],
-   "slash_guild_ids":[
-      111111111111111
-   ],
-   "claim_delay":8,
-   "kak_delay":9,
-   "use_emoji":"<:keqing_love:795077041761288214>",
-   "roll_this":"wg",
-   "rolling":"True",
-   "slash_rolling":"True",
-   "pkmrolling":"True",
-   "series_list":[
-      "Honkai Impact 3rd"
-   ],
-   "namelist":[
-      "Raiden Mei"
-   ],
-   "emoji_list":[
-	  "kakera",	
-      "kakeraT",
-      "kakeraG",
-      "kakeraY",
-      "kakeraO",
-      "kakeraR",
-      "kakeraW",
-      "kakeraL"
-   ],
-   "soulemoji_list":[
-      "kakeraO",
-      "kakeraR",
-      "KakeraW",
-      "KakeraL"
-   ],
-   "min_kak":500,
-   "Last_True":"True",
-   "last_claim_min": 61,
-   "min_kak_last_min": 10
+  "token": "",
+  "channel_ids": [],
+  "claim_delay": 1.5,
+  "kak_delay": 1.5,
+  "use_emoji": "<:haha:475702642912526357>",
+  "roll_this": "ma",
+  "rolling": "True",
+  "pkmrolling": "false",
+  "series_list": [
+    "Pandora Hearts",
+    "Kingdom Hearts",
+    "Violet Evergarden",
+    "DARLING in the FRANXX",
+    "Magical Girl Raising Project",
+    "Panty & Stocking with Garterbelt",
+    "Fate/stay night",
+    "Owari no Seraph",
+    "Hunter × Hunter"
+  ],
+  "namelist": [
+    "Sora",
+    "Riku",
+    "Alice Baskerville",
+    "Alice (PH)",
+    "Violet Evergarden",
+    "Flandre Scarlet",
+    "Zero Two",
+    "Hatsune Miku",
+    "Hardgore Alice",
+    "Stocking Anarchy",
+    "Rider",
+    "Mei Misaki",
+    "Rem",
+    "Emilia",
+    "Nezuko Kamado",
+    "Akame",
+    "Shiro",
+    "Yor Forger",
+    "Krul Tepes",
+    "Kurapika"
+  ],
+  "emoji_list": [
+    "kakera",
+    "kakeraT",
+    "kakeraG",
+    "kakeraY",
+    "kakeraO",
+    "kakeraR",
+    "kakeraW",
+    "kakeraL"
+  ],
+  "min_kak": 150,
+  "Last_True": "True",
+  "last_claim_min": 60,
+  "min_kak_last_min": 35
 }
-
-

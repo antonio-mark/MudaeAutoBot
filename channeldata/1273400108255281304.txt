@@ -1,0 +1,33 @@
+_ __**Configurações do Server**__ _
+(Server não premium)
+
+· Prefix: **$** ($prefix)
+· Lang: **pt-br** ($lang)
+· Claim reset: cada **180** min. ($setclaim)
+· Minuto exato do reset: xx:**14** ($setinterval)
+· Reset alterada: por +**0** min. ($shifthour)
+· Rolls por hora: **10** ($setrolls)
+· Tempo antes da reação dos rolls sumir: **45** sec. ($settimer)
+· Raridade de spawn para personagens já casados: **2** ($setrare)
+· % kakera bônus: **+0** ($setkakerabonus)
+· Game mode: **2** ($gamemode)
+· $servlimroul = 36686 $wa, 37233 $ha, 26119 $wg, 22297 $hg
+· Channel instance: **2** ($channelinstance)
+· Slash commands: **desativado** ($toggleslash)
+
+· Ranking: ativado ($toggleclaimrank/$togglelikerank)
+· Ranks exibidos durante os rolls: claims e likes ($togglerolls)
+· Séries de Hentai: **desativado** ($togglehentai)
+· Séries com imagens 'Gore': **desativado** ($toggledisturbing)
+· Personagens crianças: ativado ($togglechildtag)
+· Rolls sniping: 0 ($togglesnipe)
+· Kakera sniping: 0 ($togglekakerasnipe)
+· Limite de caracteres por harém: **10000** ($haremlimit)
+· Reacts: ****para todos os seus rolls**** ($togglereact)
+· Reações personalizadas: sim ($claimreact list)
+· Reações de kakera mais reconhecíveis: não ($kakerareact switchset)
+
+· Trade de Kakera: ativado ($togglekakeratrade)
+· Cálculo de Kakera: claim e like rank (e número de personagens casados) ($togglekakeraclaim/$togglekakeralike)
+· Valor de kakera exibido durante os rolls: ativado ($togglekakerarolls)
+· $kakeraloot wishprotect: ativado ($togglewishprotect)
